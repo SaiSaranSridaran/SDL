@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Professional Theater Booking System</title>
+    <style>
+        body {
+            font-family: Arial;
+            margin: 0;
+            background: linear-gradient(to right, #141E30, #243B55);
+            color: white;
+            text-align: center;
+        }
+
+        h1 { margin: 20px; }
+
+        .page { display: none; padding: 20px; }
+
+        input, select {
+            padding: 8px;
+            margin: 8px;
+            width: 250px;
+            border-radius: 5px;
+            border: none;
+        }
+
+        button {
+            padding: 10px 20px;
+            background: red;
+            border: none;
+            color: white;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        button:hover { background: darkred; }
+
+        .seat {
+            display: inline-block;
+            width: 30px;
+            height: 30px;
+            margin: 5px;
+            background: white;
+            color: black;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+
+        .selected { background: green; color: white; }
+        .booked { background: red; color: white; cursor: not-allowed; }
+
+        .card {
+            background: rgba(255,255,255,0.1);
+            padding: 15px;
+            margin: 10px auto;
+            width: 80%;
+            border-radius: 10px;
+        }
+
+        table {
+            margin: auto;
+            border-collapse: collapse;
+            width: 80%;
+        }
+
+        th, td {
+            border: 1px solid white;
+            padding: 8px;
+        }
+    </style>
+</head>
+<body>
+
+<h1>🎬 Online Theater Booking System</h1>
+
+<!-- HOME PAGE -->
+<div id="home" class="page">
+    <button onclick="showPage('login')">User Login</button>
+    <button onclick="showPage('register')">Register</button>
+    <button onclick="showPage('adminLogin')">Admin Login</button>
+</div>
+
+<!-- REGISTER PAGE -->
+<div id="register" class="page">
+    <h2>Register</h2>
+    <input type="text" id="regName" placeholder="Name"><br>
+    <input type="email" id="regEmail" placeholder="Email"><br>
+    <input type="password" id="regPass" placeholder="Password"><br>
+    <button onclick="register()">Register</button><br><br>
+    <button onclick="showPage('home')">Back</button>
+</div>
+
+<!-- LOGIN PAGE -->
+<div id="login" class="page">
+    <h2>User Login</h2>
+    <input type="email" id="logEmail" placeholder="Email"><br>
+    <input type="password" id="logPass" placeholder="Password"><br>
+    <button onclick="login()">Login</button><br><br>
+    <button onclick="showPage('home')">Back</button>
+</div>
+
+<!-- USER DASHBOARD -->
+<div id="dashboard" class="page">
+    <h2>Book Tickets</h2>
+
+    <select id="movie">
+        <option>Avengers</option>
+        <option>Spiderman</option>
+        <option>Joker</option>
+    </select>
+
+    <select id="time">
+        <option>10 AM</option>
+        <option>2 PM</option>
+        <option>6 PM</option>
+    </select>
+
+    <div id="seats"></div>
+
+    <p>Seats Selected: <span id="count">0</span></p>
+    <p>Total Price: ₹<span id="total">0</span></p>
+
+    <button onclick="book()">Confirm Booking</button>
+    <button onclick="logout()">Logout</button>
+
+    <div class="card">
+        <h3>Your Bookings</h3>
+        <div id="myBookings"></div>
+    </div>
+</div>
+
+<!-- ADMIN LOGIN -->
+<div id="adminLogin" class="page">
+    <h2>Admin Login</h2>
+    <input type="password" id="adminPass" placeholder="Enter Admin Password"><br>
+    <button onclick="adminLogin()">Login</button><br><br>
+    <button onclick="showPage('home')">Back</button>
+</div>
+
+<!-- ADMIN DASHBOARD -->
+<div id="adminDashboard" class="page">
+    <h2>Admin Dashboard</h2>
+
+    <div class="card">
+        <h3>Registered Users</h3>
+        <div id="usersList"></div>
+    </div>
+
+    <div class="card">
+        <h3>Login History</h3>
+        <div id="loginHistory"></div>
+    </div>
+
+    <div class="card">
+        <h3>All Bookings</h3>
+        <div id="allBookings"></div>
+    </div>
+
+    <button onclick="showPage('home')">Logout</button>
+</div>
+
+<script>
+let currentUser = null;
+const price = 150;
+let selectedSeats = [];
+
+function showPage(page) {
+    document.querySelectorAll('.page').forEach(p => p.style.display = "none");
+    document.getElementById(page).style.display = "block";
+}
+
+showPage('home');
+
+/* REGISTER */
+function register() {
+    let users = JSON.parse(localStorage.getItem("users")) || [];
+
+    let user = {
+        name: regName.value,
+        email: regEmail.value,
+        password: regPass.value
+    };
+
+    users.push(user);
+    localStorage.setItem("users", JSON.stringify(users));
+    alert("Registered Successfully");
+    showPage('login');
+}
+
+/* LOGIN */
+function login() {
+    let users = JSON.parse(localStorage.getItem("users")) || [];
+    let found = users.find(u => u.email === logEmail.value && u.password === logPass.value);
+
+    if (found) {
+        currentUser = found;
+        saveLoginHistory(found.email);
+        loadSeats();
+        loadMyBookings();
+        showPage('dashboard');
+    } else {
+        alert("Invalid Credentials");
+    }
+}
+
+function logout() {
+    currentUser = null;
+    showPage('home');
+}
+
+/* LOGIN HISTORY */
+function saveLoginHistory(email) {
+    let history = JSON.parse(localStorage.getItem("loginHistory")) || [];
+    history.push({ email, date: new Date().toLocaleString() });
+    localStorage.setItem("loginHistory", JSON.stringify(history));
+}
+
+/* SEATS */
+function loadSeats() {
+    seats.innerHTML = "";
+    selectedSeats = [];
+
+    for (let i = 1; i <= 30; i++) {
+        let div = document.createElement("div");
+        div.className = "seat";
+        div.innerText = i;
+
+        div.onclick = () => {
+            if (div.classList.contains("booked")) return;
+
+            div.classList.toggle("selected");
+
+            if (selectedSeats.includes(i)) {
+                selectedSeats = selectedSeats.filter(s => s !== i);
+            } else {
+                selectedSeats.push(i);
+            }
+
+            count.innerText = selectedSeats.length;
+            total.innerText = selectedSeats.length * price;
+        };
+
+        seats.appendChild(div);
+    }
+}
+
+/* BOOK */
+function book() {
+    if (selectedSeats.length === 0) {
+        alert("Select seats");
+        return;
+    }
+
+    let bookings = JSON.parse(localStorage.getItem("bookings")) || [];
+
+    let booking = {
+        user: currentUser.email,
+        movie: movie.value,
+        time: time.value,
+        seats: selectedSeats,
+        total: selectedSeats.length * price,
+        date: new Date().toLocaleString()
+    };
+
+    bookings.push(booking);
+    localStorage.setItem("bookings", JSON.stringify(bookings));
+
+    alert("Booking Successful");
+    loadMyBookings();
+    loadSeats();
+}
+
+/* USER BOOKINGS */
+function loadMyBookings() {
+    let bookings = JSON.parse(localStorage.getItem("bookings")) || [];
+    myBookings.innerHTML = "";
+
+    bookings.filter(b => b.user === currentUser.email)
+        .forEach(b => {
+            myBookings.innerHTML += `<p>${b.movie} | ${b.time} | Seats: ${b.seats.join(",")} | ₹${b.total}</p>`;
+        });
+}
+
+/* ADMIN */
+function adminLogin() {
+    if (adminPass.value === "admin123") {
+        showPage('adminDashboard');
+        loadAdminData();
+    } else {
+        alert("Wrong Password");
+    }
+}
+
+function loadAdminData() {
+    let users = JSON.parse(localStorage.getItem("users")) || [];
+    let bookings = JSON.parse(localStorage.getItem("bookings")) || [];
+    let history = JSON.parse(localStorage.getItem("loginHistory")) || [];
+
+    usersList.innerHTML = users.map(u => `<p>${u.name} - ${u.email}</p>`).join("");
+    loginHistory.innerHTML = history.map(h => `<p>${h.email} - ${h.date}</p>`).join("");
+    allBookings.innerHTML = bookings.map(b =>
+        `<p>${b.user} | ${b.movie} | ${b.seats.join(",")} | ₹${b.total}</p>`
+    ).join("");
+}
+</script>
+
+</body>
+</html>
