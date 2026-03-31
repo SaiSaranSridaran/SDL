@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Sai Deepak — Book Tickets</title>
+  <link rel="stylesheet" href="style.css"/>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow:ital,wght@0,300;0,400;0,600;1,300&display=swap" rel="stylesheet"/>
+</head>
+<body>
+
+<nav class="navbar">
+  <div class="logo"><a href="index.html">SAI<span>DEEPAK</span></a></div>
+  <ul class="nav-links">
+    <li><a href="index.html">Now Showing</a></li>
+    <li><a href="booking.html" class="active">Book Tickets</a></li>
+    <li><a href="index.html#myBookings">My Bookings</a></li>
+  </ul>
+  <div class="nav-user">
+    <span id="userGreeting">Guest</span>
+    <button class="btn-outline nav-auth-btn" onclick="openModal('loginModal')">Sign In</button>
+  </div>
+</nav>
+
+<section class="booking-page">
+  <div class="booking-container">
+
+    <!-- STEP INDICATOR -->
+    <div class="steps">
+      <div class="step active" id="step1ind"><span>01</span> Select Movie</div>
+      <div class="step-line"></div>
+      <div class="step" id="step2ind"><span>02</span> Choose Seats</div>
+      <div class="step-line"></div>
+      <div class="step" id="step3ind"><span>03</span> Confirm</div>
+    </div>
+
+    <!-- STEP 1: Select Movie & Showtime -->
+    <div class="booking-step" id="step1">
+      <h2>SELECT FILM & SHOWTIME</h2>
+      <div class="movie-select-grid" id="movieSelectGrid"></div>
+
+      <div class="showtime-section hidden" id="showtimeSection">
+        <h3>SELECT DATE</h3>
+        <div class="date-pills" id="datePills"></div>
+        <h3>SELECT SHOWTIME</h3>
+        <div class="time-pills" id="timePills"></div>
+        <button class="btn-primary" onclick="goToStep(2)" id="continueToSeats" disabled>CONTINUE TO SEATS →</button>
+      </div>
+    </div>
+
+    <!-- STEP 2: Seat Selection -->
+    <div class="booking-step hidden" id="step2">
+      <h2>CHOOSE YOUR SEATS</h2>
+      <div class="screen-label">— SCREEN —</div>
+      <div class="seat-map" id="seatMap"></div>
+      <div class="seat-legend">
+        <span><i class="seat-demo available"></i> Available</span>
+        <span><i class="seat-demo selected"></i> Selected</span>
+        <span><i class="seat-demo taken"></i> Taken</span>
+      </div>
+      <div class="seat-summary" id="seatSummary">Selected: <strong id="selectedSeatsDisplay">None</strong></div>
+      <div class="step-actions">
+        <button class="btn-outline" onclick="goToStep(1)">← Back</button>
+        <button class="btn-primary" id="continueToConfirm" onclick="goToStep(3)" disabled>REVIEW ORDER →</button>
+      </div>
+    </div>
+
+    <!-- STEP 3: Confirm -->
+    <div class="booking-step hidden" id="step3">
+      <h2>CONFIRM BOOKING</h2>
+      <div class="confirmation-card" id="confirmationCard"></div>
+
+      <div class="form-group">
+        <label>Your Name</label>
+        <input type="text" id="confirmName" placeholder="Full Name" required/>
+      </div>
+      <div class="form-group">
+        <label>Email</label>
+        <input type="email" id="confirmEmail" placeholder="you@email.com" required/>
+      </div>
+      <div class="form-group">
+        <label>Card Number (demo)</label>
+        <input type="text" id="cardNumber" placeholder="1234 5678 9012 3456" maxlength="19" oninput="formatCard(this)"/>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Expiry</label>
+          <input type="text" id="cardExpiry" placeholder="MM/YY" maxlength="5"/>
+        </div>
+        <div class="form-group">
+          <label>CVV</label>
+          <input type="text" id="cardCVV" placeholder="123" maxlength="3"/>
+        </div>
+      </div>
+
+      <div class="step-actions">
+        <button class="btn-outline" onclick="goToStep(2)">← Back</button>
+        <button class="btn-primary" onclick="submitBooking()">PAY & CONFIRM 🎬</button>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- SUCCESS MODAL -->
+<div class="modal-overlay hidden" id="successModal">
+  <div class="modal success-modal">
+    <div class="success-icon">🎟️</div>
+    <h2>BOOKING CONFIRMED!</h2>
+    <div id="successDetails"></div>
+    <button class="btn-primary" onclick="window.location.href='index.html'">BACK TO HOME</button>
+  </div>
+</div>
+
+<!-- LOGIN MODAL -->
+<div class="modal-overlay hidden" id="loginModal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('loginModal')">✕</button>
+    <h2>SIGN IN</h2>
+    <form id="loginForm" onsubmit="handleLogin(event)">
+      <div class="form-group"><label>Email</label><input type="email" id="loginEmail" placeholder="you@email.com" required/></div>
+      <div class="form-group"><label>Password</label><input type="password" id="loginPassword" placeholder="••••••••" required/></div>
+      <button type="submit" class="btn-primary full-width">Sign In</button>
+      <p class="form-switch" style="text-align:center;margin-top:12px;">No account? <a href="#" onclick="switchModal('loginModal','registerModal')">Sign Up</a></p>
+    </form>
+  </div>
+</div>
+
+<!-- REGISTER MODAL -->
+<div class="modal-overlay hidden" id="registerModal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('registerModal')">✕</button>
+    <h2>CREATE ACCOUNT</h2>
+    <form id="registerForm" onsubmit="handleRegister(event)">
+      <div class="form-group"><label>Full Name</label><input type="text" id="regName" placeholder="Your Name" required/></div>
+      <div class="form-group"><label>Email</label><input type="email" id="regEmail" placeholder="you@email.com" required/></div>
+      <div class="form-group"><label>Password</label><input type="password" id="regPassword" placeholder="••••••••" required/></div>
+      <button type="submit" class="btn-primary full-width">Create Account</button>
+      <p class="form-switch" style="text-align:center;margin-top:12px;">Already have an account? <a href="#" onclick="switchModal('registerModal','loginModal')">Sign In</a></p>
+    </form>
+  </div>
+</div>
+
+<div class="toast hidden" id="toast"></div>
+<script src="app.js"></script>
+<script src="booking.js"></script>
+</body>
+</html>
